@@ -1,0 +1,7 @@
+# 仅用于开发验证：用 --patch 临时挂载 agent-halo 插件，不修改任何 profile。
+# 绝对路径换成你本机的 agent-halo/dsh-plugin/index.js。
+- insert:
+    - id: agent-halo
+      name: 'file:///path/to/agent-halo/dsh-plugin/index.js'
+      config:
+        port: 5180

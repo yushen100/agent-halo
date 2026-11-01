@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "事件光环",
+    "description": "DSH 启动时自动拉起 agent-halo，并把当前会话事件实时推送到光环。"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Agent Halo",
+    "description": "Start agent-halo with DSH and stream live session events into the halo console."
+  }
+}

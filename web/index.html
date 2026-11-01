@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>agent-halo · 事件光环</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e8e8e8' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23e8e8e8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <span>agent-halo</span>
+        <span class="sub">DSH / Claude Code 事件光环</span>
+      </div>
+      <div class="topmeta" aria-hidden="true">
+        <span><i></i><b id="modeText">回放</b></span>
+        <span>CH 01</span>
+        <span id="topClock">--:--</span>
+      </div>
+      <div class="picker">
+        <span id="rehearsalBadge" class="badge" hidden>演练 · 合成脉冲</span>
+        <select id="layoutSelect" aria-label="布局模式">
+          <option value="auto">自适应</option>
+          <option value="small">小图模式</option>
+          <option value="big">大图模式</option>
+        </select>
+        <select id="sessionSelect" aria-label="选择回放"></select>
+        <button id="reloadBtn" class="ghost" title="重新载入">刷新</button>
+        <button id="rehearsalBtn" class="ghost rehearsal" title="注入合成网络脉冲，仅用于视觉验证，不写入时间轴和真实数据">演练</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <canvas id="halo" aria-label="事件光环画布"></canvas>
+
+      <aside class="panel">
+        <section class="now">
+          <div class="now-label">当前状态</div>
+          <div class="now-phase" id="phaseText" data-phase="idle">空闲</div>
+          <div class="now-tool" id="toolText">—</div>
+          <div class="now-error" id="nowError" hidden>
+            <span class="now-error-tag" id="nowErrorTag">错误</span>
+            <span class="now-error-text" id="nowErrorText"></span>
+          </div>
+          <div class="metrics">
+            <div><span>token/s</span><strong id="tokenRate">0</strong></div>
+            <div><span>上下文</span><strong id="contextPct">0%</strong></div>
+            <div><span>步</span><strong id="stepText">—</strong></div>
+            <div><span>并行</span><strong id="subagentText">0</strong></div>
+          </div>
+
+          <details class="legend-box">
+            <summary>LEGEND / 图例</summary>
+            <div class="legend" aria-hidden="true">
+              <div class="legend-row">
+                <span><i class="lg model"></i>模型</span>
+                <span><i class="lg tool"></i>工具</span>
+                <span><i class="lg wait"></i>等人</span>
+                <span><i class="lg red"></i>要人确认</span>
+                <span><i class="lg gap"></i>失败缺口</span>
+              </div>
+              <div class="legend-row net-legend">
+                <span><i class="nl radar"></i>搜索 · 雷达</span>
+                <span><i class="nl in">←</i>下载 · 向内</span>
+                <span><i class="nl out">→</i>上传 · 向外</span>
+                <span><i class="nl solid"></i>直连</span>
+                <span><i class="nl dashed"></i>代理 + PROXY</span>
+                <span><i class="nl diamond"></i>网关 GW</span>
+                <span><i class="nl dotted"></i>未知</span>
+                <span><i class="nl broken"></i>失败断流</span>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="events">
+          <div class="section-title">
+            <span>最近事件</span>
+            <button id="nextAnomaly" class="ghost small">下一个异常</button>
+          </div>
+          <ol id="eventList"></ol>
+        </section>
+
+        <section class="detail" id="detail">
+          <div class="section-title"><span>事件详情</span></div>
+          <div class="detail-empty" id="detailEmpty">点一条事件，或点光环上的脉冲。</div>
+          <dl class="detail-body" id="detailBody" hidden>
+            <dt>关联事件</dt><dd id="dLinks"></dd>
+            <dt>类型</dt><dd id="dKind"></dd>
+            <dt>时间</dt><dd id="dTime"></dd>
+            <dt>工具</dt><dd id="dTool"></dd>
+            <dt id="dNetDt" hidden>网络</dt><dd id="dNet" hidden></dd>
+            <dt>说明</dt><dd id="dLabel"></dd>
+            <dt>耗时</dt><dd id="dDuration"></dd>
+            <dt>来源</dt><dd id="dRef"></dd>
+          </dl>
+          <button id="copyRef" class="ghost small" hidden>复制来源路径</button>
+        </section>
+      </aside>
+
+      <section class="deck" aria-hidden="true">
+        <div class="deck-panel">
+          <header><span>EVENT FEED / 事件流水</span><b id="deckFeedMeta">—</b></header>
+          <canvas id="deckFeed"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>TOOL LOAD</span><b id="deckToolsMeta">—</b></header>
+          <canvas id="deckTools"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>TOKEN FLOW</span><b id="deckTokensMeta">—</b></header>
+          <canvas id="deckTokens"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>CONTEXT / 上下文</span><b id="deckCtxMeta">—</b></header>
+          <canvas id="deckCtx"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>LATENCY TRACE / 耗时轨迹</span><b id="deckTraceMeta">—</b></header>
+          <canvas id="deckTrace"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>TOOL STATUS / 工具状态</span><b id="deckStatusMeta">—</b></header>
+          <canvas id="deckStatus"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>NET ROUTE</span><b id="deckRoutesMeta">—</b></header>
+          <canvas id="deckRoutes"></canvas>
+        </div>
+        <div class="deck-panel">
+          <header><span>EVENT MATRIX</span><b id="deckMatrixMeta">—</b></header>
+          <canvas id="deckMatrix"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer class="controls">
+      <button id="langBtn" class="ghost small" title="切换语言 / Switch language">EN</button>
+      <button id="playBtn" class="primary">暂停</button>
+      <label class="speed">
+        速度
+        <select id="speedSelect">
+          <option value="0.5">0.5×</option>
+          <option value="1">1×</option>
+          <option value="2">2×</option>
+          <option value="4" selected>4×</option>
+          <option value="8">8×</option>
+          <option value="16">16×</option>
+          <option value="32">32×</option>
+        </select>
+      </label>
+      <label class="music">
+        <button id="musicBtn" class="ghost small" type="button" aria-pressed="false">播放音乐</button>
+        <input id="musicVolume" type="range" min="0" max="100" value="30" step="1" aria-label="背景音乐音量">
+        <span id="musicVolText">30%</span>
+      </label>
+      <label class="toggle" title="把超过 5 秒的空白快进到 0.5 秒">
+        <input type="checkbox" id="compressGaps" checked>
+        <span id="compressLabel">空白压缩</span>
+      </label>
+      <input type="range" id="timeline" min="0" max="1000" value="0" step="1" aria-label="时间轴">
+      <span class="clock" id="clockText">--:--</span>
+    </footer>
+
+  </div>
+  <audio id="bgMusic" src="audio/cornfield-chase.m4a" loop preload="auto"></audio>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script defer src="js/core.js"></script>
+  <script defer src="js/playback.js"></script>
+  <script defer src="js/list-data.js"></script>
+  <script defer src="js/draw-orb.js"></script>
+  <script defer src="js/draw-ring.js"></script>
+  <script defer src="js/draw-fx.js"></script>
+  <script defer src="js/deck.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script type="module" src="ext/nav.js"></script>
+  <script type="module" src="ext/tools.js"></script>
+  <script type="module" src="ext/compare.js"></script>
+</body>
+</html>

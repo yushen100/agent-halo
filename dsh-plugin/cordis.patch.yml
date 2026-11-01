@@ -1,0 +1,6 @@
+# agent-halo: DSH 启动时自动拉起光环，并订阅会话事件。
+- insert:
+    - id: agent-halo
+      name: 'agent-halo-dsh-plugin'
+      config:
+        port: 5180
