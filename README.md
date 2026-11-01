@@ -13,6 +13,20 @@ agent-halo 是一个零依赖的本地可视化控制台：它读取 Claude Code
 - **中英切换**：界面文案走统一 `I18N` / `STATIC_EN`，数据本身（路径、命令、工具名）不翻译。
 - **本地优先**：Node 内置模块 + Canvas 2D，无运行时第三方依赖；只绑定 `127.0.0.1`。
 
+## 预览
+
+### 大图模式
+
+![agent-halo 大图模式](docs/images/big-mode.png)
+
+### 小图模式
+
+![agent-halo 小图模式](docs/images/small-mode.png)
+
+### 演示视频
+
+[播放 / 下载 13 秒演示视频](docs/media/demo.mp4)
+
 ## 快速开始
 
 环境：Node.js 22+（已在 Node 24 验证），Windows 优先；服务本身可跨平台运行。
